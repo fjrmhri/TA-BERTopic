@@ -373,6 +373,7 @@ Deploy folder [backend](/d:/TA/code/Berita_Hoax_BERTopic/backend) ke Hugging Fac
 
 Env penting:
 
+- `MODEL_DIR` (prioritas path model lokal untuk runtime Docker)
 - `MODEL_ID`
 - `LOCAL_MODEL_PATH`
 - `CALIBRATION_PATH`
@@ -385,6 +386,7 @@ Default fallback backend saat ini:
 
 - `MODEL_ID=fjrmhri/Deteksi_Hoax_IndoBERT_BERTopic`
 - `LOCAL_MODEL_PATH=indobert_hoax_model_v1`
+- `MODEL_DIR=/app/indobert_hoax_model_v1` (direkomendasikan untuk HF Spaces backend-only)
 
 ### Frontend
 Di folder [frontend](/d:/TA/code/Berita_Hoax_BERTopic/frontend):
@@ -397,8 +399,46 @@ Override API bisa memakai query string:
 ?api=https://your-backend-host
 ```
 
+## Verifikasi di HF Spaces
+### 1) Cek status model dan threshold
+- Buka `https://<space-host>/health`
+- Pastikan minimal:
+  - `model_source` = `local` (jika folder model lokal tersedia di Space)
+  - `local_model_valid` = `true`
+  - `hoax_threshold` sesuai `calibration.json` (contoh: `0.1`)
+  - `calibration_loaded` = `true`
+
+### 2) Cek endpoint debug forensik
+- Buka `https://<space-host>/debug`
+- Endpoint ini menampilkan:
+  - sumber model efektif (`local`/`hub`) + alasan fallback
+  - mapping label (`id2label`/`label2id`)
+  - threshold + sumber threshold
+  - contoh prediksi 1 sampel fakta + 1 sampel hoaks dari `dataset/*.csv` (jika dataset tersedia di runtime)
+
+### 3) Cek inferensi utama
+- Kirim `POST https://<space-host>/analyze` dengan body:
+```json
+{
+  "text": "Beredar klaim lowongan CPNS fiktif yang meminta transfer biaya pendaftaran."
+}
+```
+- Verifikasi field `model.source`, `model.hoax_threshold`, `paragraphs[].sentences[]`.
+
 ### Notebook
 Gunakan [Deteksi_Hoax_V1.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax_V1.ipynb) sebagai notebook utama di Google Colab. Notebook legacy [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb) dipertahankan untuk referensi historis.
+
+## Status BERTopic
+- BERTopic belum diaktifkan di jalur inferensi utama backend.
+- Backend mengirim `topics = {"enabled": false, "items": []}` secara eksplisit.
+- Frontend hanya menampilkan panel topik jika `topics.enabled === true` dan ada item, sehingga panel topik disembunyikan pada mode saat ini.
+
+## Smoke Test Maintainer
+- Script: [scripts/smoke_backend.py](/d:/TA/code/Berita_Hoax_BERTopic/scripts/smoke_backend.py)
+- Fungsi:
+  - ambil 5 sampel fakta + 5 sampel hoaks dari `dataset/*.csv`
+  - panggil endpoint `/analyze`
+  - cetak distribusi prediksi dan metadata model source/threshold untuk sanity check cepat
 
 ## Verifikasi yang Dilakukan
 - `python -m py_compile backend/app.py`

@@ -32,6 +32,7 @@ function resolveApiBaseUrl() {
 
 const API_BASE = resolveApiBaseUrl();
 const ANALYZE_ENDPOINT = API_BASE ? `${API_BASE}/analyze` : "/analyze";
+const HEALTH_ENDPOINT = API_BASE ? `${API_BASE}/health` : "/health";
 
 const analyzeForm = document.getElementById("analyzeForm");
 const inputText = document.getElementById("inputText");
@@ -44,6 +45,7 @@ const summaryPanel = document.getElementById("summaryPanel");
 const highlightPanel = document.getElementById("highlightPanel");
 const confidencePanel = document.getElementById("confidencePanel");
 const topicPanel = document.getElementById("topicPanel");
+const debugMeta = document.getElementById("debugMeta");
 
 const highlightContent = document.getElementById("highlightContent");
 const confidenceContent = document.getElementById("confidenceContent");
@@ -56,6 +58,7 @@ const sumFakta = document.getElementById("sumFakta");
 const sumLowConf = document.getElementById("sumLowConf");
 
 let latestResponse = null;
+let latestHealth = null;
 
 function escapeHtml(value) {
   return String(value)
@@ -107,6 +110,7 @@ function clearError() {
 
 function clearOutput() {
   latestResponse = null;
+  latestHealth = null;
   summaryPanel.classList.add("hidden");
   highlightPanel.classList.add("hidden");
   confidencePanel.classList.add("hidden");
@@ -114,6 +118,10 @@ function clearOutput() {
   highlightContent.innerHTML = "";
   confidenceContent.innerHTML = "";
   topicContent.innerHTML = "";
+  if (debugMeta) {
+    debugMeta.textContent = "";
+    debugMeta.classList.add("hidden");
+  }
 }
 
 function renderSummary(summary) {
@@ -208,6 +216,35 @@ function renderTopics(topics) {
   topicPanel.classList.remove("hidden");
 }
 
+async function fetchHealthData() {
+  try {
+    const response = await fetch(HEALTH_ENDPOINT, { method: "GET" });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = await response.json().catch(() => null);
+    return payload && typeof payload === "object" ? payload : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function renderDebugMeta(model, health) {
+  if (!debugMeta) {
+    return;
+  }
+
+  const source = health?.model_source ?? model?.source ?? "-";
+  const threshold = health?.hoax_threshold ?? model?.hoax_threshold;
+  const calibrationLoaded =
+    health?.calibration_loaded ?? model?.calibration_loaded;
+  const thresholdText =
+    typeof threshold === "number" ? `${(threshold * 100).toFixed(1)}%` : "-";
+
+  debugMeta.textContent = `Model source: ${source} | Hoaks threshold: ${thresholdText} | Calibration loaded: ${Boolean(calibrationLoaded)}`;
+  debugMeta.classList.remove("hidden");
+}
+
 function formatCopyText(data) {
   const lines = [];
   lines.push("Ringkasan Analisis");
@@ -281,10 +318,12 @@ analyzeForm.addEventListener("submit", async (event) => {
     }
 
     latestResponse = payload;
+    latestHealth = await fetchHealthData();
     renderSummary(payload.summary || {});
     renderHighlights(payload.paragraphs || []);
     renderConfidence(payload.paragraphs || []);
     renderTopics(payload.topics || { enabled: false, items: [] });
+    renderDebugMeta(payload.model || {}, latestHealth);
   } catch (error) {
     if (error instanceof TypeError) {
       showError(

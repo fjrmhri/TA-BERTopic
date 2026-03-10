@@ -225,6 +225,14 @@ button.secondary:hover {
   font-weight: 700;
 }
 
+.debug-meta {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  border-top: 1px dashed var(--line);
+  padding-top: 0.6rem;
+}
+
 .accordion > summary {
   cursor: pointer;
   font-weight: 700;
