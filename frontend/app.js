@@ -1,12 +1,33 @@
-const DEFAULT_API_BASE = "https://fjrmhri-TA_Berita_Hoax_BERTopic.hf.space";
+const DEFAULT_API_BASE = "https://fjrmhri-ta-berita-hoax-bertopic.hf.space";
+
+function normalizeApiBaseUrl(raw) {
+  const value = String(raw || "").trim();
+  if (!value) {
+    return "";
+  }
+
+  // Normalisasi domain HF Spaces: lowercase + underscore -> hyphen.
+  const normalizedHfSpace = value.replace(
+    /^https?:\/\/([^/]+)\.hf\.space/i,
+    (_all, subdomain) =>
+      `https://${String(subdomain).toLowerCase().replace(/_/g, "-")}.hf.space`,
+  );
+
+  try {
+    const parsed = new URL(normalizedHfSpace);
+    return parsed.origin.replace(/\/+$/, "");
+  } catch (_error) {
+    return normalizedHfSpace.replace(/\/+$/, "");
+  }
+}
 
 function resolveApiBaseUrl() {
   const params = new URLSearchParams(window.location.search);
   const override = params.get("api");
   if (override && override.trim()) {
-    return override.trim().replace(/\/+$/, "");
+    return normalizeApiBaseUrl(override);
   }
-  return DEFAULT_API_BASE.trim().replace(/\/+$/, "");
+  return normalizeApiBaseUrl(DEFAULT_API_BASE);
 }
 
 const API_BASE = resolveApiBaseUrl();
@@ -51,7 +72,15 @@ function pct(value) {
 
 function getErrorMessage(detail, fallback) {
   if (typeof detail === "string" && detail.trim()) {
-    return detail.trim();
+    const text = detail.trim();
+    const lowered = text.toLowerCase();
+    if (lowered.includes("<!doctype html") || lowered.includes("<html")) {
+      return `Backend URL tidak valid atau endpoint tidak ditemukan. Pastikan API mengarah ke ${ANALYZE_ENDPOINT}`;
+    }
+    if (text.length > 300) {
+      return `${text.slice(0, 300)}...`;
+    }
+    return text;
   }
   if (detail && typeof detail === "object") {
     if (typeof detail.message === "string" && detail.message.trim()) {
