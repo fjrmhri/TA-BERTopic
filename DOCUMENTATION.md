@@ -3,13 +3,15 @@
 ## Ringkasan Sistem
 Repositori ini sekarang diposisikan sebagai pipeline klasifikasi hoaks berbasis `indolem/indobert-base-uncased` dengan:
 
-- training notebook utama di [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb)
+- training notebook utama di [Deteksi_Hoax_V1.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax_V1.ipynb)
+- notebook legacy di [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb)
 - backend FastAPI untuk Hugging Face Spaces di [backend/app.py](/d:/TA/code/Berita_Hoax_BERTopic/backend/app.py)
 - frontend statis untuk Vercel di [frontend/index.html](/d:/TA/code/Berita_Hoax_BERTopic/frontend/index.html), [frontend/app.js](/d:/TA/code/Berita_Hoax_BERTopic/frontend/app.js), dan [frontend/styles.css](/d:/TA/code/Berita_Hoax_BERTopic/frontend/styles.css)
 
 Keputusan final patch:
 
 - notebook utama memakai `dataset/` lokal
+- notebook utama diperbarui ke `Deteksi_Hoax_V1.ipynb`
 - backbone tetap IndoBERT
 - NER dihapus penuh dari backend dan frontend
 - sentence-level dipakai pada inferensi saja, bukan sebagai retraining sentence-level
@@ -68,7 +70,18 @@ Kesimpulan dataset:
 - `isi_berita` tidak cocok untuk setup `max_length=256` yang ingin aman di Colab T4
 
 ## Analisis Notebook
-### Deteksi_Hoax.ipynb
+### Deteksi_Hoax_V1.ipynb
+Notebook utama saat ini. Struktur cell disusun ulang untuk Colab T4:
+
+- install/import dependensi inti tanpa KaggleHub
+- resolusi dataset lokal + kandidat Google Drive
+- training aman T4 (`fp16`, `auto_find_batch_size`, `gradient_checkpointing`, dynamic padding, grad accumulation)
+- evaluasi ringkas validation/test
+- kalibrasi `best_threshold` ke `calibration.json`
+- demo inferensi multi-paragraf per kalimat
+- upload folder artefak ke repo HF `fjrmhri/Deteksi_Hoax_IndoBERT_BERTopic`
+
+### Deteksi_Hoax.ipynb (legacy)
 Pra-patch yang dibaca saat analisis:
 
 - Cell 1 memakai path `Summarized_CNN.csv`, `Summarized_Detik.csv`, `Summarized_Kompas.csv`, `Summarized_TurnBackHoax.csv`, dan `Summarized_2020+.csv`
@@ -104,13 +117,13 @@ Batas bukti:
 ## Jawaban Q1-Q6
 ### Q1. Migrasi dataset
 Kesimpulan:
-Ya, `Deteksi_Hoax.ipynb` bisa memakai `dataset/` lokal tanpa mengganti backbone IndoBERT atau arsitektur klasifikasi.
+Ya, `Deteksi_Hoax_V1.ipynb` memakai `dataset/` lokal tanpa mengganti backbone IndoBERT atau arsitektur klasifikasi.
 
 Bukti:
 
 - skema keempat CSV lokal sudah konsisten
 - pra-patch notebook sudah memuat struktur kolom yang sama di cell 3 dan melakukan mapping label di cell 4
-- patch final di [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb) cell 1-4 hanya mengganti sumber file dan prioritas kolom teks
+- patch final di [Deteksi_Hoax_V1.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax_V1.ipynb) memuat alur dataset lokal + prioritas kolom teks
 
 Risiko:
 
@@ -230,7 +243,7 @@ Response:
 {
   "model": {
     "source": "local|hub",
-    "model_id": "fjrmhri/Deteksi_Hoax_TA",
+    "model_id": "fjrmhri/Deteksi_Hoax_IndoBERT_BERTopic",
     "analysis_mode": "sentence_split_doc_model",
     "max_length": 256,
     "num_labels": 2,
@@ -279,7 +292,7 @@ Response:
 }
 ```
 
-### Q5. Optimasi `Deteksi_Hoax.ipynb` untuk Colab T4
+### Q5. Optimasi `Deteksi_Hoax_V1.ipynb` untuk Colab T4
 Kesimpulan:
 Aman dilakukan, dan patch notebook sudah mengarah ke konfigurasi yang lebih realistis untuk T4 15GB.
 
@@ -356,12 +369,7 @@ Rekomendasi:
 
 ## Cara Menjalankan
 ### Backend
-Di folder [backend](/d:/TA/code/Berita_Hoax_BERTopic/backend):
-
-```bash
-pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port 7860
-```
+Deploy folder [backend](/d:/TA/code/Berita_Hoax_BERTopic/backend) ke Hugging Face Spaces dengan runtime Docker. `Dockerfile` sudah mengatur service FastAPI pada port `7860`.
 
 Env penting:
 
@@ -373,11 +381,15 @@ Env penting:
 - `MAX_LENGTH`
 - `BATCH_SIZE`
 
+Default fallback backend saat ini:
+
+- `MODEL_ID=fjrmhri/Deteksi_Hoax_IndoBERT_BERTopic`
+- `LOCAL_MODEL_PATH=indobert_hoax_model_v1`
+
 ### Frontend
 Di folder [frontend](/d:/TA/code/Berita_Hoax_BERTopic/frontend):
 
-- deploy sebagai static files ke Vercel, atau
-- buka `index.html` langsung saat pengujian lokal
+- deploy sebagai static files ke Vercel
 
 Override API bisa memakai query string:
 
@@ -386,7 +398,7 @@ Override API bisa memakai query string:
 ```
 
 ### Notebook
-Jalankan [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb) dari root repo atau Colab yang memiliki folder `dataset/` lokal. Cell 12 menyediakan demo inferensi multi-paragraf per kalimat setelah training.
+Gunakan [Deteksi_Hoax_V1.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax_V1.ipynb) sebagai notebook utama di Google Colab. Notebook legacy [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb) dipertahankan untuk referensi historis.
 
 ## Verifikasi yang Dilakukan
 - `python -m py_compile backend/app.py`
@@ -394,7 +406,8 @@ Jalankan [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipyn
 - semua code cell notebook selain cell magic install berhasil di-compile sebagai Python source
 
 ## Perubahan File
-- [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb): migrasi ke `dataset/`, optimasi T4, demo multi-paragraf per kalimat
+- [Deteksi_Hoax_V1.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax_V1.ipynb): notebook utama baru untuk Colab T4, kalibrasi threshold, dan upload HF Hub
+- [Deteksi_Hoax.ipynb](/d:/TA/code/Berita_Hoax_BERTopic/Deteksi_Hoax.ipynb): notebook legacy (tidak jadi target utama)
 - [backend/app.py](/d:/TA/code/Berita_Hoax_BERTopic/backend/app.py): hapus NER, sederhanakan artifact handling, batching inferensi, kontrak API baru
 - [backend/requirements.txt](/d:/TA/code/Berita_Hoax_BERTopic/backend/requirements.txt): buang dependency runtime yang tidak lagi dipakai
 - [frontend/index.html](/d:/TA/code/Berita_Hoax_BERTopic/frontend/index.html): hapus panel dan kontrol NER

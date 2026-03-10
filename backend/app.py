@@ -15,7 +15,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger("hoax-backend")
 
-MODEL_ID = os.getenv("MODEL_ID", "fjrmhri/Deteksi_Hoax_TA")
+MODEL_ID = os.getenv("MODEL_ID", "fjrmhri/Deteksi_Hoax_IndoBERT_BERTopic")
 HF_TOKEN = os.getenv("HF_TOKEN")
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN")
 ORANGE_THRESHOLD = float(os.getenv("ORANGE_THRESHOLD", "0.65"))
@@ -26,7 +26,7 @@ BATCH_SIZE = int(os.getenv("BATCH_SIZE", "32"))
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 LOCAL_MODEL_PATH = Path(
-    os.getenv("LOCAL_MODEL_PATH", str(ROOT_DIR / "indobert_hoax_model_v3"))
+    os.getenv("LOCAL_MODEL_PATH", str(ROOT_DIR / "indobert_hoax_model_v1"))
 )
 CALIBRATION_PATH = Path(
     os.getenv("CALIBRATION_PATH", str(LOCAL_MODEL_PATH / "calibration.json"))

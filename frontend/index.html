@@ -15,11 +15,11 @@
   <body>
     <main class="container">
       <header class="hero card">
-        <p class="kicker"></p>
+        <p class="kicker">Analisis Kalimat • IndoBERT</p>
         <h1>Deteksi Berita Indonesia Hoaks Menggunakan IndoBERT</h1>
         <p class="subtitle">
           Tempel teks multi paragraf, lalu sistem memberi highlight per kalimat
-          (Hoaks/Fakta/Low Confidence) beserta panel confidence yang ringkas.
+          (Hoaks/Fakta/Low Confidence) dengan ringkasan confidence yang lebih jelas.
         </p>
       </header>
 
@@ -32,10 +32,11 @@
               rows="12"
               placeholder="Masukkan teks berita atau narasi panjang di sini..."
             ></textarea>
+            <p class="field-help">Tips: pisahkan paragraf dengan satu baris kosong untuk analisis yang lebih rapi.</p>
           </div>
 
           <div class="button-row">
-            <button id="analyzeBtn" type="submit">Periksa</button>
+            <button id="analyzeBtn" type="submit">Analisis</button>
             <button id="resetBtn" type="button" class="secondary">Reset</button>
             <button id="copyBtn" type="button" class="secondary">
               Copy hasil
@@ -51,7 +52,7 @@
       </section>
 
       <section id="loader" class="card hidden">
-        <p>Memproses analisis, mohon tunggu...</p>
+        <p>Memproses analisis kalimat, mohon tunggu sebentar...</p>
       </section>
 
       <section id="errorBox" class="card error hidden"></section>

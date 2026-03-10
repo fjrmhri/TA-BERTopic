@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://fjrmhri-space-deteksi-hoax-ta.hf.space";
+const DEFAULT_API_BASE = "";
 
 function resolveApiBaseUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -6,11 +6,11 @@ function resolveApiBaseUrl() {
   if (override && override.trim()) {
     return override.trim().replace(/\/+$/, "");
   }
-  return API_BASE_URL.replace(/\/+$/, "");
+  return DEFAULT_API_BASE.trim().replace(/\/+$/, "");
 }
 
 const API_BASE = resolveApiBaseUrl();
-const ANALYZE_ENDPOINT = `${API_BASE}/analyze`;
+const ANALYZE_ENDPOINT = API_BASE ? `${API_BASE}/analyze` : "/analyze";
 
 const analyzeForm = document.getElementById("analyzeForm");
 const inputText = document.getElementById("inputText");
@@ -47,6 +47,19 @@ function escapeHtml(value) {
 
 function pct(value) {
   return `${(Number(value) * 100).toFixed(2)}%`;
+}
+
+function getErrorMessage(detail, fallback) {
+  if (typeof detail === "string" && detail.trim()) {
+    return detail.trim();
+  }
+  if (detail && typeof detail === "object") {
+    if (typeof detail.message === "string" && detail.message.trim()) {
+      return detail.message.trim();
+    }
+    return JSON.stringify(detail);
+  }
+  return fallback;
 }
 
 function setLoading(isLoading) {
@@ -211,9 +224,23 @@ analyzeForm.addEventListener("submit", async (event) => {
       body: JSON.stringify({ text }),
     });
 
-    const payload = await response.json().catch(() => ({}));
+    const rawBody = await response.text();
+    let payload = {};
+    if (rawBody) {
+      try {
+        payload = JSON.parse(rawBody);
+      } catch (_error) {
+        payload = { detail: rawBody };
+      }
+    }
+
     if (!response.ok) {
-      throw new Error(payload.detail || `HTTP ${response.status}`);
+      const detail = getErrorMessage(payload.detail, `HTTP ${response.status}`);
+      throw new Error(detail);
+    }
+
+    if (!payload || typeof payload !== "object") {
+      throw new Error("Response API tidak valid.");
     }
 
     latestResponse = payload;
@@ -222,7 +249,13 @@ analyzeForm.addEventListener("submit", async (event) => {
     renderConfidence(payload.paragraphs || []);
     renderTopics(payload.topics || { enabled: false, items: [] });
   } catch (error) {
-    showError(`Gagal memproses: ${error.message}`);
+    if (error instanceof TypeError) {
+      showError(
+        `Gagal menghubungi API (${ANALYZE_ENDPOINT}). Pastikan backend aktif dan CORS sudah sesuai.`
+      );
+    } else {
+      showError(`Gagal memproses: ${error.message}`);
+    }
   } finally {
     setLoading(false);
   }
