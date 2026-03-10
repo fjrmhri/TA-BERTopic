@@ -140,7 +140,7 @@ function renderHighlights(paragraphs) {
         .map(
           (sentence) => `
             <span class="hl ${escapeHtml(sentence.color)}" title="${escapeHtml(
-              `${sentence.label} | conf ${pct(sentence.confidence)} | Hoaks ${pct(sentence.prob_hoax)} | Fakta ${pct(
+              `${sentence.label} | risk ${sentence.risk_level ?? "-"} | conf ${pct(sentence.confidence)} | Hoaks ${pct(sentence.prob_hoax)} | Fakta ${pct(
                 sentence.prob_fakta,
               )}`,
             )}">${escapeHtml(sentence.text)}</span>
@@ -169,7 +169,7 @@ function renderConfidence(paragraphs) {
           (sentence) => `
             <div class="confidence-item">
               <div class="conf-left">
-                <strong>[${escapeHtml(sentence.label)}]</strong> ${escapeHtml(sentence.text)}
+                <strong>[${escapeHtml(sentence.label)} | risk: ${escapeHtml(sentence.risk_level ?? "-")}]</strong> ${escapeHtml(sentence.text)}
               </div>
               <div class="conf-right">${pct(sentence.confidence)}</div>
             </div>
@@ -184,7 +184,7 @@ function renderConfidence(paragraphs) {
           ${items || "<p><em>(Tidak ada kalimat terdeteksi)</em></p>"}
           <p><small>Hoaks: ${summary.hoax_sentences ?? 0} | Fakta: ${summary.fakta_sentences ?? 0} | Avg conf: ${pct(
             summary.avg_confidence ?? 0,
-          )} | Max hoaks prob: ${pct(summary.max_hoax_prob ?? 0)}</small></p>
+          )} | Max hoaks prob: ${pct(summary.max_hoax_prob ?? 0)} | Risk H/M/L: ${summary.risk_high_sentences ?? 0}/${summary.risk_medium_sentences ?? 0}/${summary.risk_low_sentences ?? 0}</small></p>
         </section>
       `;
     })
@@ -243,20 +243,35 @@ function renderDebugMeta(model, health) {
     health?.decision_mode_configured ??
     model?.decision_mode_configured ??
     "-";
+  const topicStatus =
+    (health && typeof health.topics === "object" && health.topics) ||
+    (model && typeof model.topics === "object" && model.topics) ||
+    {};
   const topicsEnabled =
+    topicStatus.enabled ??
     health?.topics_enabled ??
-    model?.topics?.enabled ??
     false;
+  const topicSource = topicStatus.source ?? "-";
+  const topicModelId = topicStatus.model_id ?? "-";
+  const riskThresholds = health?.risk_thresholds ?? model?.risk_thresholds ?? {};
   const threshold = health?.hoax_threshold ?? model?.hoax_threshold;
   const calibrationLoaded =
     health?.calibration_loaded ?? model?.calibration_loaded;
   const thresholdText =
     typeof threshold === "number" ? `${(threshold * 100).toFixed(1)}%` : "-";
+  const riskHigh =
+    typeof riskThresholds.high === "number"
+      ? `${(riskThresholds.high * 100).toFixed(0)}%`
+      : "-";
+  const riskMedium =
+    typeof riskThresholds.medium === "number"
+      ? `${(riskThresholds.medium * 100).toFixed(0)}%`
+      : "-";
 
   const modelText = modelSubfolder
     ? `${modelId} (${modelSubfolder})`
     : String(modelId);
-  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Decision mode: ${decisionMode} | Hoaks threshold: ${thresholdText} | Calibration loaded: ${Boolean(calibrationLoaded)} | Topics enabled: ${Boolean(topicsEnabled)}`;
+  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Decision mode: ${decisionMode} | Hoaks threshold: ${thresholdText} | Risk(H/M): ${riskHigh}/${riskMedium} | Calibration loaded: ${Boolean(calibrationLoaded)} | Topics: ${Boolean(topicsEnabled)} (${topicSource}${topicModelId !== "-" ? `, ${topicModelId}` : ""})`;
   debugMeta.classList.remove("hidden");
 }
 
@@ -272,7 +287,7 @@ function formatCopyText(data) {
     lines.push(`Paragraf ${paragraph.paragraph_index + 1}`);
     for (const sentence of paragraph.sentences) {
       lines.push(
-        `- [${sentence.label}] conf=${pct(sentence.confidence)} :: ${sentence.text}`,
+        `- [${sentence.label} | risk=${sentence.risk_level ?? "-"}] conf=${pct(sentence.confidence)} :: ${sentence.text}`,
       );
     }
     lines.push("");
