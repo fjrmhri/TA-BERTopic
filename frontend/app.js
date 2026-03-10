@@ -237,6 +237,16 @@ function renderDebugMeta(model, health) {
   const modelId = health?.model_id ?? model?.model_id ?? "-";
   const modelSubfolder = health?.model_subfolder ?? model?.model_subfolder ?? "";
   const source = health?.model_source ?? model?.source ?? "-";
+  const decisionMode =
+    health?.decision_mode_effective ??
+    model?.decision_mode_effective ??
+    health?.decision_mode_configured ??
+    model?.decision_mode_configured ??
+    "-";
+  const topicsEnabled =
+    health?.topics_enabled ??
+    model?.topics?.enabled ??
+    false;
   const threshold = health?.hoax_threshold ?? model?.hoax_threshold;
   const calibrationLoaded =
     health?.calibration_loaded ?? model?.calibration_loaded;
@@ -246,7 +256,7 @@ function renderDebugMeta(model, health) {
   const modelText = modelSubfolder
     ? `${modelId} (${modelSubfolder})`
     : String(modelId);
-  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Hoaks threshold: ${thresholdText} | Calibration loaded: ${Boolean(calibrationLoaded)}`;
+  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Decision mode: ${decisionMode} | Hoaks threshold: ${thresholdText} | Calibration loaded: ${Boolean(calibrationLoaded)} | Topics enabled: ${Boolean(topicsEnabled)}`;
   debugMeta.classList.remove("hidden");
 }
 
