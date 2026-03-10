@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "";
+const DEFAULT_API_BASE = "https://fjrmhri-TA_Berita_Hoax_BERTopic.hf.space";
 
 function resolveApiBaseUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -104,10 +104,10 @@ function renderHighlights(paragraphs) {
           (sentence) => `
             <span class="hl ${escapeHtml(sentence.color)}" title="${escapeHtml(
               `${sentence.label} | conf ${pct(sentence.confidence)} | Hoaks ${pct(sentence.prob_hoax)} | Fakta ${pct(
-                sentence.prob_fakta
-              )}`
+                sentence.prob_fakta,
+              )}`,
             )}">${escapeHtml(sentence.text)}</span>
-          `
+          `,
         )
         .join(" ");
 
@@ -136,7 +136,7 @@ function renderConfidence(paragraphs) {
               </div>
               <div class="conf-right">${pct(sentence.confidence)}</div>
             </div>
-          `
+          `,
         )
         .join("");
 
@@ -146,7 +146,7 @@ function renderConfidence(paragraphs) {
           <h3>Paragraf ${paragraph.paragraph_index + 1}</h3>
           ${items || "<p><em>(Tidak ada kalimat terdeteksi)</em></p>"}
           <p><small>Hoaks: ${summary.hoax_sentences ?? 0} | Fakta: ${summary.fakta_sentences ?? 0} | Avg conf: ${pct(
-            summary.avg_confidence ?? 0
+            summary.avg_confidence ?? 0,
           )} | Max hoaks prob: ${pct(summary.max_hoax_prob ?? 0)}</small></p>
         </section>
       `;
@@ -173,7 +173,7 @@ function renderTopics(topics) {
           <div class="topic-meta">ID: ${escapeHtml(topic.topic_id ?? "-")}</div>
           <div class="topic-meta">Skor: ${pct(topic.probability ?? 0)}</div>
         </article>
-      `
+      `,
     )
     .join("");
   topicPanel.classList.remove("hidden");
@@ -183,22 +183,30 @@ function formatCopyText(data) {
   const lines = [];
   lines.push("Ringkasan Analisis");
   lines.push(
-    `Paragraf=${data.summary.num_paragraphs}, Kalimat=${data.summary.num_sentences}, Hoaks=${data.summary.hoax_sentences}, Fakta=${data.summary.fakta_sentences}, LowConf=${data.summary.low_conf_sentences}`
+    `Paragraf=${data.summary.num_paragraphs}, Kalimat=${data.summary.num_sentences}, Hoaks=${data.summary.hoax_sentences}, Fakta=${data.summary.fakta_sentences}, LowConf=${data.summary.low_conf_sentences}`,
   );
   lines.push("");
 
   for (const paragraph of data.paragraphs) {
     lines.push(`Paragraf ${paragraph.paragraph_index + 1}`);
     for (const sentence of paragraph.sentences) {
-      lines.push(`- [${sentence.label}] conf=${pct(sentence.confidence)} :: ${sentence.text}`);
+      lines.push(
+        `- [${sentence.label}] conf=${pct(sentence.confidence)} :: ${sentence.text}`,
+      );
     }
     lines.push("");
   }
 
-  if (data.topics?.enabled && Array.isArray(data.topics.items) && data.topics.items.length > 0) {
+  if (
+    data.topics?.enabled &&
+    Array.isArray(data.topics.items) &&
+    data.topics.items.length > 0
+  ) {
     lines.push("Topik");
     for (const topic of data.topics.items) {
-      lines.push(`- ${topic.topic_label} (id=${topic.topic_id}, skor=${pct(topic.probability ?? 0)})`);
+      lines.push(
+        `- ${topic.topic_label} (id=${topic.topic_id}, skor=${pct(topic.probability ?? 0)})`,
+      );
     }
   }
 
@@ -251,7 +259,7 @@ analyzeForm.addEventListener("submit", async (event) => {
   } catch (error) {
     if (error instanceof TypeError) {
       showError(
-        `Gagal menghubungi API (${ANALYZE_ENDPOINT}). Pastikan backend aktif dan CORS sudah sesuai.`
+        `Gagal menghubungi API (${ANALYZE_ENDPOINT}). Pastikan backend aktif dan CORS sudah sesuai.`,
       );
     } else {
       showError(`Gagal memproses: ${error.message}`);
