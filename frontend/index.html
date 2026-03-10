@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deteksi Hoaks Indonesia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero card">
+        <p class="kicker"></p>
+        <h1>Deteksi Berita Indonesia Hoaks Menggunakan IndoBERT</h1>
+        <p class="subtitle">
+          Tempel teks multi paragraf, lalu sistem memberi highlight per kalimat
+          (Hoaks/Fakta/Low Confidence) beserta panel confidence yang ringkas.
+        </p>
+      </header>
+
+      <section class="card controls">
+        <form id="analyzeForm">
+          <div class="field-group">
+            <label for="inputText">Teks Berita</label>
+            <textarea
+              id="inputText"
+              rows="12"
+              placeholder="Masukkan teks berita atau narasi panjang di sini..."
+            ></textarea>
+          </div>
+
+          <div class="button-row">
+            <button id="analyzeBtn" type="submit">Periksa</button>
+            <button id="resetBtn" type="button" class="secondary">Reset</button>
+            <button id="copyBtn" type="button" class="secondary">
+              Copy hasil
+            </button>
+          </div>
+        </form>
+
+        <div class="legend">
+          <span class="chip chip-red">Merah = Hoaks</span>
+          <span class="chip chip-green">Hijau = Fakta</span>
+          <span class="chip chip-orange">Oranye = Keyakinan &lt;65%</span>
+        </div>
+      </section>
+
+      <section id="loader" class="card hidden">
+        <p>Memproses analisis, mohon tunggu...</p>
+      </section>
+
+      <section id="errorBox" class="card error hidden"></section>
+
+      <section id="summaryPanel" class="card hidden">
+        <h2>Ringkasan</h2>
+        <div class="summary-grid">
+          <div class="metric">
+            <p class="label">Paragraf</p>
+            <p id="sumParagraphs" class="value">0</p>
+          </div>
+          <div class="metric">
+            <p class="label">Kalimat</p>
+            <p id="sumSentences" class="value">0</p>
+          </div>
+          <div class="metric">
+            <p class="label">Hoaks</p>
+            <p id="sumHoax" class="value">0</p>
+          </div>
+          <div class="metric">
+            <p class="label">Fakta</p>
+            <p id="sumFakta" class="value">0</p>
+          </div>
+          <div class="metric">
+            <p class="label">Low Confidence</p>
+            <p id="sumLowConf" class="value">0</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="highlightPanel" class="card hidden">
+        <h2>Hasil Highlight</h2>
+        <div id="highlightContent"></div>
+      </section>
+
+      <details id="confidencePanel" class="card hidden accordion">
+        <summary>Confidence</summary>
+        <div id="confidenceContent"></div>
+      </details>
+
+      <details id="topicPanel" class="card hidden accordion">
+        <summary>Topik</summary>
+        <div id="topicContent"></div>
+      </details>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
