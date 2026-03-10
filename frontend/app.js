@@ -234,6 +234,8 @@ function renderDebugMeta(model, health) {
     return;
   }
 
+  const modelId = health?.model_id ?? model?.model_id ?? "-";
+  const modelSubfolder = health?.model_subfolder ?? model?.model_subfolder ?? "";
   const source = health?.model_source ?? model?.source ?? "-";
   const threshold = health?.hoax_threshold ?? model?.hoax_threshold;
   const calibrationLoaded =
@@ -241,7 +243,10 @@ function renderDebugMeta(model, health) {
   const thresholdText =
     typeof threshold === "number" ? `${(threshold * 100).toFixed(1)}%` : "-";
 
-  debugMeta.textContent = `Model source: ${source} | Hoaks threshold: ${thresholdText} | Calibration loaded: ${Boolean(calibrationLoaded)}`;
+  const modelText = modelSubfolder
+    ? `${modelId} (${modelSubfolder})`
+    : String(modelId);
+  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Hoaks threshold: ${thresholdText} | Calibration loaded: ${Boolean(calibrationLoaded)}`;
   debugMeta.classList.remove("hidden");
 }
 
