@@ -196,9 +196,21 @@ function renderConfidence(paragraphs) {
 
 function renderTopics(topics) {
   const items = Array.isArray(topics?.items) ? topics.items : [];
-  if (!topics?.enabled || items.length === 0) {
+  if (!topics?.enabled) {
     topicContent.innerHTML = "";
     topicPanel.classList.add("hidden");
+    return;
+  }
+
+  if (items.length === 0) {
+    const reason = typeof topics?.reason === "string" && topics.reason.trim()
+      ? ` (${escapeHtml(topics.reason.trim())})`
+      : "";
+    topicContent.innerHTML = `<p class="topic-empty">Model topik aktif, tetapi belum ada topik yang terdeteksi${reason}.</p>`;
+    topicPanel.classList.remove("hidden");
+    if ("open" in topicPanel) {
+      topicPanel.open = true;
+    }
     return;
   }
 
@@ -214,6 +226,9 @@ function renderTopics(topics) {
     )
     .join("");
   topicPanel.classList.remove("hidden");
+  if ("open" in topicPanel) {
+    topicPanel.open = true;
+  }
 }
 
 async function fetchHealthData() {
@@ -255,6 +270,9 @@ function renderDebugMeta(model, health) {
   const topicModelId = topicStatus.model_id ?? "-";
   const riskThresholds = health?.risk_thresholds ?? model?.risk_thresholds ?? {};
   const threshold = health?.hoax_threshold ?? model?.hoax_threshold;
+  const argmaxHoaxMinProb =
+    health?.argmax_hoax_min_prob ??
+    model?.argmax_hoax_min_prob;
   const calibrationLoaded =
     health?.calibration_loaded ?? model?.calibration_loaded;
   const thresholdText =
@@ -267,11 +285,15 @@ function renderDebugMeta(model, health) {
     typeof riskThresholds.medium === "number"
       ? `${(riskThresholds.medium * 100).toFixed(0)}%`
       : "-";
+  const argmaxFloorText =
+    typeof argmaxHoaxMinProb === "number"
+      ? `${(argmaxHoaxMinProb * 100).toFixed(0)}%`
+      : "-";
 
   const modelText = modelSubfolder
     ? `${modelId} (${modelSubfolder})`
     : String(modelId);
-  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Decision mode: ${decisionMode} | Hoaks threshold: ${thresholdText} | Risk(H/M): ${riskHigh}/${riskMedium} | Calibration loaded: ${Boolean(calibrationLoaded)} | Topics: ${Boolean(topicsEnabled)} (${topicSource}${topicModelId !== "-" ? `, ${topicModelId}` : ""})`;
+  debugMeta.textContent = `Model: ${modelText} | Source: ${source} | Decision mode: ${decisionMode} | Hoaks threshold: ${thresholdText} | Argmax hoaks min: ${argmaxFloorText} | Risk(H/M): ${riskHigh}/${riskMedium} | Calibration loaded: ${Boolean(calibrationLoaded)} | Topics: ${Boolean(topicsEnabled)} (${topicSource}${topicModelId !== "-" ? `, ${topicModelId}` : ""})`;
   debugMeta.classList.remove("hidden");
 }
 
