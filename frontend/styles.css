@@ -350,6 +350,15 @@ button.secondary:hover {
   color: var(--muted);
 }
 
+.topic-empty {
+  margin: 0;
+  border: 1px dashed #c7d9d3;
+  border-radius: 12px;
+  padding: 0.72rem 0.78rem;
+  color: #3f5e54;
+  background: #f7fbf9;
+}
+
 #loader p {
   margin: 0;
   color: #175547;
